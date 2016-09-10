@@ -1,5 +1,8 @@
 # Squarez
 
+## Download
+[Latest Release](https://github.com/njank/Squarez/releases/latest)
+
 ## Shapes
 | Shape | Spawn Rate | Speed | Points | Effect |
 |:-------------:| :-------------:|:-----| -----:|:-----|
