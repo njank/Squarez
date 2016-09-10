@@ -15,4 +15,16 @@
 *dependent on your current level
 
 ## Levels
+| Level | Points needed |
+|-----:|-----:|
+|1  |510  |
+|2  |730  |
+|3  |1070 |
+|4  |1560 |
+|5  |2270 |
+|6  |3310 |
+|7  |4830 |
+|8  |7050 |
+|9  |10280|
+|10 |15000|
 Your level will increase gradually while playing. The maximum level is 10.
