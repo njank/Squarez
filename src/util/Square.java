@@ -1,52 +1,58 @@
 package util;
 
 public class Square {
-
     public int x;
     public int y;
     public int size;
-    public int type;
+    public Type type;
     public int speed;
     public int direction;
+    
+    public static enum Type {
+      BLUE, GREEN, BLACK, ORANGE, MAGENTA, RED;
+    }
 
-    public Square(int x, int y, int type, int size, int direction) {
+    public Square(int x, int y, Type type, int size, int direction) {
         this.x = x;
         this.y = y;
         switch (this.type = type) {
-            case 1:
+            case BLUE:
                 this.speed = 3;
                 this.size = size;
                 break;
-            case 2:
+            case GREEN:
                 this.speed = 2;
                 this.size = ((int) (size / 0.8f));
                 break;
-            case 3:
+            case BLACK:
                 this.speed = 4;
                 this.size = ((int) (size / 1.2f));
                 break;
-            case 4:
+            case ORANGE:
                 this.speed = 5;
                 this.size = ((int) (size / 1.5f));
                 break;
-            case 5:
+            case MAGENTA:
                 this.speed = 6;
                 this.size = ((int) (size / 1.7f));
+                break;
+            case RED:
+                this.size = size;
                 break;
             default:
                 this.speed = 3;
         }
         this.direction = direction;
     }
-
+    
     // move the Square by the amount of level+speed in the current direction
     // returns false if the Square is outside of the visible display
-    public boolean move(int level, int width, int height) {
+    public boolean move(int level, float factor, int width, int height) {
         switch (this.direction) {
-            case 1: return (this.y += level + this.speed) < height + this.size - 1;
-            case 2: return (this.x -= level + this.speed) + this.size + 1 > 0;
-            case 3: return (this.y -= level + this.speed) + this.size + 1 > 0;
-            case 4: return (this.x += level + this.speed) < width + this.size - 1;
+            case 1: return (this.y += ((level + this.speed) * factor)) < height + this.size - 1;
+            case 2: return (this.x -= ((level + this.speed) * factor)) + this.size + 1 > 0;
+            case 3: return (this.y -= ((level + this.speed) * factor)) + this.size + 1 > 0;
+            case 4: return (this.x += ((level + this.speed) * factor)) < width + this.size - 1;
         }
         return false;
     }
@@ -75,7 +81,7 @@ public class Square {
         return ((rw < rx) || (rw > tx)) && ((rh < ry) || (rh > ty)) && ((tw < tx) || (tw > rx)) && ((th < ty) || (th > ry));
     }
 
-    public void changeDirection() {
-        this.direction = (this.direction % 4 + 1);
+    public void changeDirection(int rotation) {
+        this.direction = (this.direction % 4 + rotation);
     }
 }

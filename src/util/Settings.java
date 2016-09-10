@@ -1,88 +1,79 @@
 package util;
 
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.LinkedList;
 
 public class Settings {
-  public static final String GITHUB_URL = "https://github.com/njank/Squarez";
-  public static final String GITHUB_RAW_URL = "https://raw.githubusercontent.com/njank/Squarez/master";
-  public static final String DISPLAY_TITLE = "Squarez";
-  
   private static final String SETTINGS_FILE = "settings.ini";
   private static final String SETTINGS_FILE_SEPERATOR = "=";
   
-  public static final Dimension[][] DISPLAY_RESOLUTIONS = new Dimension[][]{
-    /*  4:3  */ new Dimension[]{new Dimension(1600,1200), new Dimension(1024,768), new Dimension(800,600)},
-    /* 16:10 */ new Dimension[]{new Dimension(1920,1200), new Dimension(1680,1050), new Dimension(1440,900), new Dimension(1280,800)},
-    /* 16:9  */ new Dimension[]{new Dimension(2560,1440), new Dimension(1920,1080), new Dimension(1600,900), new Dimension(1280,720), new Dimension(1366,768), new Dimension(1536,864)}
+  public static final String DISPLAY_TITLE = "Squarez";
+  public static final String GITHUB_USERPROJECT = "njank/Squarez";
+  
+  public static final String GITHUB_URL = "https://github.com/"+GITHUB_USERPROJECT;
+  public static final String GITHUB_RAW_URL = "https://raw.githubusercontent.com/"+GITHUB_USERPROJECT+"/master";
+  
+  private static final int[][] DISPLAY_RESOLUTIONS = new int[][]{
+    new int[]{640, 360},
+    new int[]{720, 405},
+    new int[]{960, 540},
+    new int[]{1024, 576},
+    new int[]{1280, 720},
+    new int[]{1366, 768},
+    new int[]{1600, 900},
+    new int[]{1920, 1080},
+    new int[]{2048, 1152},
+    new int[]{2560, 1440},
+    new int[]{2880, 1620},
+    new int[]{3200, 1800},
+    new int[]{3840, 2160},
+    new int[]{4096, 2304},
+    new int[]{5120, 2880},
+    new int[]{7680, 4320},
+    new int[]{15360, 8640}
   };
   
-  // general settings default constants
-  private static final String DEFAULT_LANGUAGE = "en";
-  private static final boolean DEFAULT_HARDCORE = false;
-  private static final boolean DEFAULT_CHEATS = false;
+  public static final Object[][] BLA = new Object[][]{
+    new Object[]{ "language", null }
+  };
   
-  // logic settings default constants
-  private static final int DEFAULT_SQ_GROW = 3;
-  private static final int DEFAULT_SQ_POINTS = 10;
-  private static final int DEFAULT_SQ_NEW_AMOUNT = 5;  
-  private static final int DEFAULT_SQ_SIZE = 60;
-  private static final int DEFAULT_LVL_START = 1;
-  private static final int DEFAULT_LVL_NEXT = 500;
-  private static final int DEFAULT_LVL_MAX = 10;
-  private static final double DEFAULT_LVL_FAC = 1.4542;
-  
-  // display settings default constants
-  private static final boolean DEFAULT_FULLSCREEN = false;
-  private static final int DEFAULT_DISPLAY_WIDTH = 1280;
-  private static final int DEFAULT_DISPLAY_HEIGHT = 720;
-  private static final int DEFAULT_FRAMERATE = 60;
-  private static final boolean DEFAULT_VSYNC = false;
-  
-  
-  // general settings
-  public static String language;
-  public static boolean hardcore;
-  public static boolean cheats;
-  
-  // logic settings
-  public static int sq_size;
-  public static int sq_grow;
-  public static int sq_new_amount;
-  public static int sq_points;
-  public static int lvl_max;
-  public static int lvl_next;
-  public static double lvl_fac;
-  public static int lvl_start;
-  
-  // display settings
-  public static int display_width;
-  public static int display_height;
-  public static boolean fullscreen;
-  public static boolean vsync;
-  public static int framerate;
-  
-  static {
+  public static void setUp() {
     readSettings();
   }
+
+  public static Setting[] settingsNew = new Setting[]{
+    new StringSetting("language", "en"),
+    new BooleanSetting("hardcore", false),
+    new BooleanSetting("show_hud", true),
+    new StringSetting("log_level", "info"),
+    new StringSetting("username", System.getProperty("user.name")),
+    new IntegerSetting("sq_size", 60),
+    new IntegerSetting("sq_grow", 3),
+    new IntegerSetting("sq_points", 10),
+    new IntegerSetting("sq_new_amount", 5),
+    new IntegerSetting("lvl_start", 1),
+    new IntegerSetting("lvl_max", 10),
+    new IntegerSetting("lvl_next", 500),
+    new DoubleSetting("lvl_fac", 1.4542),
+    new BooleanSetting("fullscreen", false),
+    new BooleanSetting("vsync", false),
+    new IntegerSetting("display_width", 1280),
+    new IntegerSetting("display_height", 720),
+    new IntegerSetting("framerate", 60),
+  };  
   
   public static void readSettings() {
-    HashMap<String, Object> settings = new HashMap<>();
-    
     File f = new File(SETTINGS_FILE);
     if (!f.exists()) {
-      getDefaultSettings(settings);
-      saveSettingsFile(settings);
+      resetSettings();
     } else {
       try {
         BufferedReader r = new BufferedReader(new FileReader(SETTINGS_FILE));
@@ -90,118 +81,204 @@ public class Settings {
         while ((line = r.readLine()) != null) {
           SimpleEntry<String, String> parsed = parseLine(line);
           if(parsed != null) {
-            settings.put(parsed.getKey(), parsed.getValue());
+            parseSettingValue(parsed.getKey(), parsed.getValue());
           }
         }
         r.close();
       } catch (IOException e) {
         e.printStackTrace();
       }
-    }
-    Log.logInfo("read settings file");
-    loadSettings(settings);
-  }
-
-  public static void loadSettings(HashMap<String, Object> settings) {
-    for(Entry<String, Object> entry : settings.entrySet()) {
-      String value = entry.getValue()+"";
-      Log.logDebug("read "+entry.getKey()+SETTINGS_FILE_SEPERATOR+value);
-      switch(entry.getKey()){
-        case "hardcore": hardcore = validateBoolean(value, DEFAULT_HARDCORE); break;
-        case "cheats": cheats = validateBoolean(value, DEFAULT_CHEATS); break;
-        case "sq_size": sq_size = validateInteger(value, DEFAULT_SQ_SIZE); break;
-        case "sq_grow": sq_grow = validateInteger(value, DEFAULT_SQ_GROW); break;
-        case "sq_points": sq_points = validateInteger(value, DEFAULT_SQ_POINTS); break;
-        case "sq_new_amount": sq_new_amount = validateInteger(value, DEFAULT_SQ_NEW_AMOUNT); break;
-        case "lvl_max": lvl_max = validateInteger(value, DEFAULT_LVL_MAX); break;
-        case "lvl_next": lvl_next = validateInteger(value, DEFAULT_LVL_NEXT); break;
-        case "lvl_start": lvl_start = validateInteger(value, DEFAULT_LVL_START); break;
-        case "lvl_fac": lvl_fac = validateDouble(value, DEFAULT_LVL_FAC); break;
-        case "fullscreen": fullscreen = validateBoolean(value, DEFAULT_FULLSCREEN); break;
-        case "vsync": vsync = validateBoolean(value, DEFAULT_VSYNC); break;
-        case "display_width": display_width = validateInteger(value, DEFAULT_DISPLAY_WIDTH); break;
-        case "display_height": display_height = validateInteger(value, DEFAULT_DISPLAY_HEIGHT); break;
-        case "framerate": framerate = validateInteger(value, DEFAULT_FRAMERATE); break;
-        case "language":
-          String tempLanguage = value.toLowerCase();
-          try {
-            InputStream inp = Util.classLoader.getResourceAsStream("res/localization/language_"+tempLanguage+".properties");
-            new BufferedReader(new InputStreamReader(inp));
-            language = tempLanguage; // if file exists it reaches this line
-          } catch (Exception ex){
-            language = DEFAULT_LANGUAGE; // if file does not exist keep it default
-          }
-      }
-    }
-    Log.logInfo("loaded settings");
-  }
-  
-  private static int validateInteger(String value, int defaultValue){
-    try{
-      return Integer.parseInt(value);
-    }catch(NumberFormatException ex){
-      return defaultValue;
+      Log.info("read settings from file system");
+      writeSettings();
     }
   }
   
-  private static boolean validateBoolean(String value, boolean defaultValue){
-    try{
-      return Boolean.parseBoolean(value);
-    }catch(NumberFormatException ex){
-      return defaultValue;
-    }
-  }
-  
-  private static double validateDouble(String value, double defaultValue){
-    try{
-      return Double.parseDouble(value);
-    }catch(NumberFormatException ex){
-      return defaultValue;
-    }
-  }
-
-  public static void saveSettingsFile(HashMap<String, Object> settings) {
+  public static void writeSettings() {
     try {
-      BufferedWriter w = new BufferedWriter(new FileWriter(SETTINGS_FILE, true));
-      String s = "";
-      for(Entry<String, Object> entry : settings.entrySet()) {
-        s += entry.getKey()+SETTINGS_FILE_SEPERATOR+entry.getValue()+"\r\n";
+      BufferedWriter w = new BufferedWriter(new FileWriter(SETTINGS_FILE, false));
+      String output = "";
+      for(Setting s : settingsNew) {
+        output += s.toString(SETTINGS_FILE_SEPERATOR) + System.lineSeparator();
       }
-      w.write(s);
+      w.write(output);
       w.flush();
       w.close();
-      Log.logInfo("created settings file");
+      Log.info("wrote settings to file system");
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
   
   private static SimpleEntry<String, String> parseLine(String line){
-    if(line.matches("^[a-zA-Z_]+"+SETTINGS_FILE_SEPERATOR+".+$")){ // format: <KEY>\t<VALUE>
+    if(line.matches("^[a-zA-Z_]+"+SETTINGS_FILE_SEPERATOR+".+$")){ // format: <KEY><SETTINGS_FILE_SEPERATOR><VALUE>
       String[] exploded = line.split(SETTINGS_FILE_SEPERATOR);
       return new SimpleEntry<>(exploded[0], exploded[1].replaceAll(" .*", "")); // remove every behind space
     }
     return null;
   }
 
-  private static HashMap getDefaultSettings(HashMap<String, Object> settings) {
-    settings.put("language", DEFAULT_LANGUAGE);
-    settings.put("hardcore", DEFAULT_HARDCORE+"");
-    settings.put("cheats", DEFAULT_CHEATS+"");
-    settings.put("sq_size", DEFAULT_SQ_SIZE+"");
-    settings.put("sq_grow", DEFAULT_SQ_GROW+"");
-    settings.put("sq_points", DEFAULT_SQ_POINTS+"");
-    settings.put("sq_new_amount", DEFAULT_SQ_NEW_AMOUNT+"");
-    settings.put("lvl_start", DEFAULT_LVL_START+"");
-    settings.put("lvl_max", DEFAULT_LVL_MAX+"");
-    settings.put("lvl_next", DEFAULT_LVL_NEXT+"");
-    settings.put("lvl_fac", DEFAULT_LVL_FAC+"");
-    settings.put("fullscreen", DEFAULT_FULLSCREEN+"");
-    settings.put("vsync", DEFAULT_VSYNC+"");
-    settings.put("display_width", DEFAULT_DISPLAY_WIDTH+"");
-    settings.put("display_height", DEFAULT_DISPLAY_HEIGHT+"");
-    settings.put("framerate", DEFAULT_FRAMERATE+"");
-    
-    return settings;
+  public static void resetSettings() {
+    for(Setting setting : settingsNew){
+      setting.setDefaultValue();
+    }
+    writeSettings();
+  }
+  
+  public static String[] getResolutions(){
+    Dimension display = Toolkit.getDefaultToolkit().getScreenSize();
+    LinkedList<String> returnRes = new LinkedList<String>();
+    for(int[]res : DISPLAY_RESOLUTIONS){
+      if(res[0]<display.width){ // show every 16:9 resolution smaller than actual screen size
+        returnRes.add(res[0]+"x"+res[1]);
+      }else break;
+    }
+    return returnRes.toArray(new String[0]);
+  }
+  
+  public static void parseSettingValue(String key, String value){
+    for(Setting setting : settingsNew){
+      if(setting.getKey().equals(key)){
+        setting.parseValue(value);
+        Log.debug("parseSetting("+key+", "+value+")");
+        return;
+      }
+    }
+  }
+  
+  public static void setSettingValue(String key, Object value){
+    for(Setting setting : settingsNew){
+      if(setting.getKey().equals(key)){
+        setting.setValue(value);
+        Log.debug("setSetting("+key+", "+value+")");
+        return;
+      }
+    }
+  }
+  
+  private static Object getSettingValue(String key){
+    for(Setting setting : settingsNew){
+      if(setting.getKey().equals(key)){
+        return setting.getValue();
+      }
+    }
+    return null;
+  }
+  
+  public static String getString(String key){
+    return getSettingValue(key)+"";
+  }
+  
+  public static int getInt(String key){
+    return ((Integer)getSettingValue(key)).intValue();
+  }
+  
+  public static double getDouble(String key){
+    return ((Double)getSettingValue(key)).doubleValue();
+  }
+  
+  public static boolean getBoolean(String key){
+    return ((Boolean)getSettingValue(key)).booleanValue();
+  }
+}
+
+abstract class Setting {
+  private String key;
+  private Object defaultValue;
+  protected Object value;
+
+  protected Setting(String key, Object defaultValue) {
+    this.key = key;
+    this.defaultValue = defaultValue;
+    setDefaultValue();
+  }
+  
+  protected Setting(String key, Object defaultValue, Object value) {
+    this.key = key;
+    this.defaultValue = defaultValue;
+    this.value = value;
+  }
+  
+  public void setDefaultValue() {
+    this.value = this.defaultValue;
+  }
+  
+  public String toString(String seperator) {
+    return new String(key+seperator+value);
+  }
+
+  public String getKey() {
+    return key;
+  }
+  
+  public abstract Object getValue();
+  public abstract void parseValue(String value);
+  public abstract void setValue(Object value);
+}
+  
+class StringSetting extends Setting {
+  public StringSetting(String key, String defaultValue) {
+    super(key, defaultValue);
+  }
+  public String getValue() {
+    return (String)value;
+  }
+  public void parseValue(String value) {
+    super.value = value;
+  }
+  public void setValue(Object value) {
+    super.value = (String)value;
+  }
+}
+
+class BooleanSetting extends Setting {
+  public BooleanSetting(String key, Boolean defaultValue) {
+    super(key, defaultValue);
+  }
+  public Boolean getValue() {
+    return (Boolean)value;
+  }
+  public void parseValue(String value) {
+    super.value = Boolean.parseBoolean(value);
+  }
+  public void setValue(Object value) {
+    super.value = (Boolean)value;
+  }
+}
+
+class IntegerSetting extends Setting {
+  public IntegerSetting(String key, Integer defaultValue) {
+    super(key, defaultValue);
+  }
+  public Integer getValue() {
+    return (Integer)value;
+  }
+  public void parseValue(String value) {
+    try{
+      super.value = Integer.parseInt(value);
+    }catch(NumberFormatException ex){
+      super.setDefaultValue();
+    }
+  }
+  public void setValue(Object value) {
+    super.value = (Integer)value;
+  }
+}
+
+class DoubleSetting extends Setting {
+  public DoubleSetting(String key, Double defaultValue) {
+    super(key, defaultValue);
+  }
+  public Double getValue() {
+    return (Double)value;
+  }
+  public void parseValue(String value) {
+    try{
+      super.value = Double.parseDouble(value);
+    }catch(NumberFormatException ex){
+      super.setDefaultValue();
+    }
+  }
+  public void setValue(Object value) {
+    super.value = (Double)value;
   }
 }

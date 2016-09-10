@@ -5,8 +5,6 @@ import java.util.Properties;
 import util.Util;
 
 public class Model {
-  private View view;
-  
   public String error = null;
   
   public String latestVersion;
@@ -22,15 +20,6 @@ public class Model {
     if(latestVersion != null){
       newVersionAvailable = versionCompare(latestVersion, myVersion); // >0 -> newer version available
     }
-    
-    // properties
-    props = Util.getProperties();
-    
-    
-  }
-  
-  public void setView(View view){
-    this.view = view;
   }
   
   /**

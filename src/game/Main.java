@@ -32,8 +32,8 @@ public class Main {
   }
 
   private void initializeDisplay() {
-    setDisplayMode(Settings.display_width, Settings.display_height, Settings.fullscreen);
-    Display.setVSyncEnabled(Settings.vsync);
+    setDisplayMode(Settings.getInt("display_width"), Settings.getInt("display_height"), Settings.getBoolean("fullscreen"));
+    Display.setVSyncEnabled(Settings.getBoolean("vsync"));
     Display.setTitle(Settings.DISPLAY_TITLE);
     
     try {
@@ -86,7 +86,7 @@ public class Main {
       }
 
       if (targetDisplayMode == null) {
-        Log.logError("Failed to find value mode: " + width + "x" + height + " fs=" + fullscreen);
+        Log.error("Failed to find value mode: " + width + "x" + height + " fs=" + fullscreen);
         return;
       }
 
@@ -94,18 +94,18 @@ public class Main {
       Display.setFullscreen(fullscreen);
 
     } catch (LWJGLException e) {
-      Log.logError("Unable to setup mode " + width + "x" + height + " fullscreen=" + fullscreen + e);
+      Log.error("Unable to setup mode " + width + "x" + height + " fullscreen=" + fullscreen + e);
     }
   }
 
   private void programLoop() {
     while (!Display.isCloseRequested() && !Logic.quit) {
-      Controller.update();
       Logic.update();
+      Controller.update();
       Render.run();
 
       Display.update();
-      Display.sync(Settings.framerate);
+      Display.sync(Settings.getInt("framerate"));
     }
   }
 

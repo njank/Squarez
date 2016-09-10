@@ -19,7 +19,7 @@ public class Controller {
 
   private static void setMouse() {
     mouseX = (int)(Mouse.getX() / Render.scaleX);
-    mouseY = (int)((Settings.display_height - Mouse.getY()) / Render.scaleY);
+    mouseY = (int)((Settings.getInt("display_height") - Mouse.getY()) / Render.scaleY);
     
     if(mouseX < Logic.mySquare.size/2)
       mouseX = Logic.mySquare.size/2;

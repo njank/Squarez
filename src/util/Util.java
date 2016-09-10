@@ -2,7 +2,9 @@ package util;
 
 import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -11,16 +13,28 @@ import java.util.Properties;
 
 public class Util {
   public static ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+  
+  private static Properties properties;
+    
+  public static void changeLanguage() {
+    properties = getProperties(Settings.getString("language"));
+  }
       
-  public static Properties getProperties(){
+  private static Properties getProperties(String language){
     Properties props = new Properties();
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try {
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      props.load(classLoader.getResourceAsStream("res/localization/language_"+Settings.language+".properties"));
+      props.load(classLoader.getResourceAsStream("res/localization/language_"+language+".properties"));
+    } catch (NullPointerException ex){
+      Log.error("language not found");
     } catch (IOException ex) {
-      ex.printStackTrace();
+      Log.error(ex.getMessage());
     }
     return props;
+  }
+  
+  public static String getProperty(String key){
+    return properties.getProperty(key);
   }
   
   public static void openWebpage(String url) {
@@ -58,50 +72,19 @@ public class Util {
     }
     return line;
   }
+
+  public static int rand(int lo, int hi) {
+    return (int) (Math.random() * (hi - lo + 1) + lo);
+  }
   
-  
-  
-  // 2do
-  //  static void writeStats() {
-  //    try {
-  //      BufferedWriter w = new BufferedWriter(new FileWriter("stats.csv", true));
-  //      w.write(Logic.score + ";" + Logic.level + ";" + Logic.time + ";" + System.currentTimeMillis() + ";false\n");
-  //      w.flush();
-  //      w.close();
-  //    } catch (IOException e) {
-  //      e.printStackTrace();
-  //    }
-  //  }
-  //
-  //  static String[] loadStats() {
-  //    LinkedList<Stat> statsAll = new LinkedList();
-  //    Logic.stats = new String[3];
-  //    try {
-  //      BufferedReader r = new BufferedReader(new FileReader("stats.csv"));
-  //      String line = null;
-  //      while ((line = r.readLine()) != null) {
-  //        statsAll.add(new Stat(line));
-  //      }
-  //      r.close();
-  //    } catch (IOException e) {
-  //      e.printStackTrace();
-  //      return null;
-  //    }
-  //    SimpleDateFormat dateFormat = new SimpleDateFormat();
-  //    dateFormat.applyPattern("yyyy-MM-dd");
-  //    SimpleDateFormat timeFormat = new SimpleDateFormat();
-  //    timeFormat.applyPattern("mm:ss");
-  //    Collections.sort(statsAll);
-  //    ListIterator it = statsAll.listIterator();
-  //    int i = 0;
-  //    while (i < Logic.stats.length) {
-  //      if (it.hasNext()) {
-  //        Stat s = (Stat) it.next();
-  //        Logic.stats[(i++)] = ("  " + s.score + "   " + timeFormat.format(Long.valueOf(s.time)) + "   " + dateFormat.format(Long.valueOf(s.date)) + "   " + (s.usedKinect ? "*" : ""));
-  //      } else {
-  //        Logic.stats[(i++)] = "-";
-  //      }
-  //    }
-  //    return Logic.stats;
-  //  }
+  public static void writeLine(String filename, String line, boolean append) {
+     try {
+      BufferedWriter w = new BufferedWriter(new FileWriter(filename, append));
+      w.write(line);
+      w.flush();
+      w.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 }

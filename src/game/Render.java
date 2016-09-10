@@ -1,13 +1,13 @@
 package game;
 
 import util.Log;
-import static util.Settings.display_height;
-import static util.Settings.display_width;
 import util.Square;
 import static org.lwjgl.opengl.GL11.*;
 import org.newdawn.slick.Color;
 import static game.Logic.VIRTUAL_WIDTH;
 import static game.Logic.VIRTUAL_HEIGHT;
+import util.Settings;
+import util.Util;
 
 public class Render {
 
@@ -22,24 +22,24 @@ public class Render {
     float targetAspectRatio = VIRTUAL_WIDTH / (float)VIRTUAL_HEIGHT;
 
     // figure out the largest area that fits in this resolution at the desired aspect ratio
-    width = display_width;
+    width = Settings.getInt("display_width");
     height = (int) (width / targetAspectRatio + 0.5f);
 
-    if (height > display_height) {
+    if (height > Settings.getInt("display_height")) {
       //It doesn't fit our height, we must switch to pillarbox then
-      height = display_height;
+      height = Settings.getInt("display_height");
       width = (int) (height * targetAspectRatio + 0.5f);
     }
 
     // set up the new viewport centered in the backbuffer
-    viewportX = (display_width / 2) - (width / 2);
-    viewportY = (display_height / 2) - (height / 2);
+    viewportX = (Settings.getInt("display_width") / 2) - (width / 2);
+    viewportY = (Settings.getInt("display_height") / 2) - (height / 2);
     
     //Now to calculate the scale considering the screen size and virtual size
-    scaleX = (float) ((float) (display_width) / (float) VIRTUAL_WIDTH);
-    scaleY = (float) ((float) (display_height) / (float) VIRTUAL_HEIGHT);
+    scaleX = (float) ((float) (Settings.getInt("display_width")) / (float) VIRTUAL_WIDTH);
+    scaleY = (float) ((float) (Settings.getInt("display_height")) / (float) VIRTUAL_HEIGHT);
 
-    Log.logInfo("Render.setUp(" + width + ", " + height + ")");
+    Log.debug("Render.setUp(" + width + ", " + height + ")");
   }
 
   public static void run() {
@@ -47,7 +47,8 @@ public class Render {
 
     drawSquarez();
     drawSquare(Logic.mySquare);
-    drawHud();
+    if(Settings.getBoolean("show_hud"))
+      drawHud();
 
     afterRun();
   }
@@ -61,7 +62,7 @@ public class Render {
     glLoadIdentity();
     // This function is for Mac and Windows only, if you are using
     // iOS you should use glOrthof instead
-    glOrtho(0, display_width, display_height, 0, -1, 1);
+    glOrtho(0, Settings.getInt("display_width"), Settings.getInt("display_height"), 0, -1, 1);
     /*if on iOS*/ //glOrthof(0, screen_width, screen_height, 0, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -82,30 +83,48 @@ public class Render {
   public static void afterRun() {
     glMatrixMode(GL_PROJECTION); // edit the projection matrix
     glLoadIdentity(); // reset the projection matrix
-    glOrtho(0, display_width, display_height, 0, 1, -1);
+    glOrtho(0, Settings.getInt("display_width"), Settings.getInt("display_height"), 0, 1, -1);
     glMatrixMode(GL_MODELVIEW); // switch back to the model view matrix
   }
 
   private static void drawSquare(Square s) {
+    float r=0, g=0, b=0, factor=0;
     switch (s.type) {
-      case 1: glColor3f(0.0f, 0.0f, 1.0f); break; // blue
-      case 2: glColor3f(0.0f, 1.0f, 0.0f); break; // green
-      case 3: glColor3f(0.0f, 0.0f, 0.0f); break; // black
-      case 4: glColor3f(1.0f, 0.5f, 0.0f); break; // orange
-      case 5: glColor3f(1.0f, 0.0f, 1.0f); break; // magenta
-      case 0: glColor3f(1.0f, 0.0f, 0.0f); break; // red
+      case BLUE:    r=0.0f; g=0.0f; b=1.0f; factor=0.2f; break;
+      case GREEN:   r=0.0f; g=1.0f; b=0.0f; factor=-0.05f; break;
+      case BLACK:   r=0.0f; g=0.0f; b=0.0f; factor=0.0f; break;
+      case ORANGE:  r=1.0f; g=0.5f; b=0.0f; factor=0.1f; break;
+    //  case LIGHTBLUE:   r=0.0f; g=1.0f; b=1.0f; factor=-0.05f; break;
+      case MAGENTA: r=1.0f; g=0.0f; b=1.0f; factor=0.2f; break;
+      case RED:     r=1.0f; g=0.0f; b=0.0f; factor=0.15f; break;
     }
-    drawQuad(s.x, s.y, s.size, s.size);
+    
+    int toRender=s.size;
+    for(int i=0; toRender>3; i++){
+      glColor3f(r,g+(i*factor),b);
+      
+      glBegin(GL_QUADS);
+      glVertex2f(s.x, s.y + s.size - toRender);
+      glVertex2f(s.x + s.size, s.y + s.size - toRender);
+      glVertex2f(s.x + s.size, s.y + s.size);
+      glVertex2f(s.x, s.y + s.size);
+      glEnd();
+      
+      toRender -= ((toRender+1)/(2+(Logic.onDrugs() ? Util.rand(0, 1) : 0))); // cut in half
+    }
   }
 
-  private static void drawCenteredQuad(int x, int y, int width, int height) {
-    glBegin(GL_QUADS);
-    glVertex2f(x - width / 2, y - height / 2);
-    glVertex2f(x - width / 2 + width, y - height / 2);
-    glVertex2f(x - width / 2 + width, y - height / 2 + height);
-    glVertex2f(x - width / 2, y - height / 2 + height);
-    glEnd();
-  }
+//  private static void drawSquareOld(Square s) {
+//    switch (s.type) {
+//      case 1: glColor3f(0.0f, 0.0f, 1.0f); break; // blue
+//      case 2: glColor3f(0.0f, 1.0f, 0.0f); break; // green
+//      case 3: glColor3f(0.0f, 0.0f, 0.0f); break; // black
+//      case 4: glColor3f(1.0f, 0.5f, 0.0f); break; // orange
+//      case 5: glColor3f(1.0f, 0.0f, 1.0f); break; // magenta
+//      case 0: glColor3f(1.0f, 0.0f, 0.0f); break; // red
+//    }
+//    drawQuad(s.x, s.y, s.size, s.size);
+//  }
 
   private static void drawQuad(int x, int y, int width, int height) {
     glBegin(GL_QUADS);
@@ -117,11 +136,11 @@ public class Render {
   }
 
   private static void drawHud() {
-    CustomFont.drawLeft(10, 10, "points=" + Logic.score, CustomFont.text, Color.red, Color.yellow);
-    CustomFont.drawLeft(10, 35, "level=" + Logic.level, CustomFont.text, Color.red, Color.yellow);
-    CustomFont.drawLeft(10, 60, "size=" + Logic.mySquare.size, CustomFont.text, Color.red, Color.yellow);
-    CustomFont.drawLeft(10, 85, "largestSize=" + Logic.largestSize, CustomFont.text, Color.red, Color.yellow);
-    CustomFont.drawLeft(10, 110, "time=" + Logic.getTime(), CustomFont.text, Color.red, Color.yellow);
+    CustomFont.drawLeft(10, 10, Util.getProperty("hudPoints") + "=" + Logic.score, CustomFont.text, Color.red, Color.yellow);
+    CustomFont.drawLeft(10, 35, Util.getProperty("hudLevel") + "=" + Logic.level, CustomFont.text, Color.red, Color.yellow);
+    CustomFont.drawLeft(10, 60, Util.getProperty("hudSize") + "=" + Logic.mySquare.size, CustomFont.text, Color.red, Color.yellow);
+    CustomFont.drawLeft(10, 85, Util.getProperty("hudLargestSize") + "=" + Logic.largestSize, CustomFont.text, Color.red, Color.yellow);
+    CustomFont.drawLeft(10, 110, Util.getProperty("hudTime") + "=" + Logic.getTime(), CustomFont.text, Color.red, Color.yellow);
   }
 
   private static void drawSquarez() {
